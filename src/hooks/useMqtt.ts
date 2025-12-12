@@ -25,7 +25,7 @@ export function useMqtt(ipAddress: string | null) {
     try {
       // Use ws/wss depending on page protocol and target IP address
       const proto = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
-      const wsUrl = `${proto}://${ipAddress}:${DEFAULT_WS_PORT}`;
+      const wsUrl = `${proto}://172.16.33.36:${DEFAULT_WS_PORT}`;
 
       const client = mqtt.connect(wsUrl, {
         reconnectPeriod: 5000,
