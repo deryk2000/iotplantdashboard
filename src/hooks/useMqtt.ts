@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import mqtt, { MqttClient } from "mqtt";
 import { SensorData } from "@/types/plant";
 
-const BROKER_URL = "ws://172.16.32.5:1883"; // WebSocket port for MQTT
+const BROKER_URL = "mqtt://172.16.32.5:1883"; // WebSocket port for MQTT
 
 export function useMqtt(ipAddress: string | null) {
   const [sensorData, setSensorData] = useState<SensorData>({
