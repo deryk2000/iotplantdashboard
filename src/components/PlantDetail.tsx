@@ -1,9 +1,9 @@
-import { Plant } from '@/types/plant';
-import { useMqtt } from '@/hooks/useMqtt';
-import { SensorGauge } from './SensorGauge';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Droplets, Cloud, Sun, Zap, Thermometer, Wifi, WifiOff, RefreshCw, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Plant } from "@/types/plant";
+import { useMqtt } from "@/hooks/useMqtt";
+import { SensorGauge } from "./SensorGauge";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Droplets, Cloud, Sun, Zap, Thermometer, Wifi, WifiOff, RefreshCw, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PlantDetailProps {
   plant: Plant;
@@ -19,27 +19,17 @@ export function PlantDetail({ plant, onBack, onDelete }: PlantDetailProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="rounded-full"
-          >
+          <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="font-display text-3xl font-semibold text-foreground">
-              {plant.name}
-            </h1>
+            <h1 className="font-display text-3xl font-semibold text-foreground">{plant.name}</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm text-muted-foreground font-mono">
-                {plant.ipAddress}
-              </span>
+              <span className="text-sm text-muted-foreground font-mono">{plant.ipAddress}</span>
               <span className="text-muted-foreground">•</span>
-              <span className={cn(
-                "flex items-center gap-1.5 text-sm",
-                isConnected ? "text-primary" : "text-destructive"
-              )}>
+              <span
+                className={cn("flex items-center gap-1.5 text-sm", isConnected ? "text-primary" : "text-destructive")}
+              >
                 {isConnected ? (
                   <>
                     <Wifi className="w-3.5 h-3.5" />
@@ -55,7 +45,7 @@ export function PlantDetail({ plant, onBack, onDelete }: PlantDetailProps) {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {!isConnected && (
             <Button variant="outline" size="sm" onClick={reconnect} className="gap-2">
@@ -76,7 +66,7 @@ export function PlantDetail({ plant, onBack, onDelete }: PlantDetailProps) {
 
       {error && (
         <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-          {error} - Make sure the MQTT broker is accessible at ws://172.16.32.5:9001
+          {error} - Make sure the MQTT broker is accessible at mqtt://172.16.32.5:1883
         </div>
       )}
 
@@ -90,7 +80,7 @@ export function PlantDetail({ plant, onBack, onDelete }: PlantDetailProps) {
           color="moisture"
           icon={<Droplets className="w-5 h-5" />}
         />
-        
+
         <SensorGauge
           value={sensorData.humidity}
           max={100}
@@ -99,7 +89,7 @@ export function PlantDetail({ plant, onBack, onDelete }: PlantDetailProps) {
           color="humidity"
           icon={<Cloud className="w-5 h-5" />}
         />
-        
+
         <SensorGauge
           value={sensorData.sunlight.visible}
           max={65535}
@@ -108,7 +98,7 @@ export function PlantDetail({ plant, onBack, onDelete }: PlantDetailProps) {
           color="sunlight"
           icon={<Sun className="w-5 h-5" />}
         />
-        
+
         <SensorGauge
           value={sensorData.sunlight.uv}
           max={500}
@@ -117,7 +107,7 @@ export function PlantDetail({ plant, onBack, onDelete }: PlantDetailProps) {
           color="sunlight-uv"
           icon={<Zap className="w-5 h-5" />}
         />
-        
+
         <SensorGauge
           value={sensorData.sunlight.ir}
           max={65535}
