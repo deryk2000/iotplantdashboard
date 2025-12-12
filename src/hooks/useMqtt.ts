@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import mqtt, { MqttClient } from 'mqtt';
-import { SensorData } from '@/types/plant';
+import { useState, useEffect, useCallback, useRef } from "react";
+import mqtt, { MqttClient } from "mqtt";
+import { SensorData } from "@/types/plant";
 
-const BROKER_URL = 'ws://172.16.32.5:9001'; // WebSocket port for MQTT
+const BROKER_URL = "ws://172.16.32.5:1883"; // WebSocket port for MQTT
 
 export function useMqtt(ipAddress: string | null) {
   const [sensorData, setSensorData] = useState<SensorData>({
@@ -11,9 +11,9 @@ export function useMqtt(ipAddress: string | null) {
     sunlight: {
       uv: null,
       visible: null,
-      ir: null
+      ir: null,
     },
-    lastUpdated: null
+    lastUpdated: null,
   });
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +30,8 @@ export function useMqtt(ipAddress: string | null) {
 
       clientRef.current = client;
 
-      client.on('connect', () => {
-        console.log('Connected to MQTT broker');
+      client.on("connect", () => {
+        console.log("Connected to MQTT broker");
         setIsConnected(true);
         setError(null);
 
@@ -41,10 +41,10 @@ export function useMqtt(ipAddress: string | null) {
           `${ipAddress}/sensors/moisture0`,
           `${ipAddress}/sensors/sunlight/uv`,
           `${ipAddress}/sensors/sunlight/visible`,
-          `${ipAddress}/sensors/sunlight/ir`
+          `${ipAddress}/sensors/sunlight/ir`,
         ];
 
-        topics.forEach(topic => {
+        topics.forEach((topic) => {
           client.subscribe(topic, (err) => {
             if (err) {
               console.error(`Failed to subscribe to ${topic}:`, err);
@@ -55,22 +55,22 @@ export function useMqtt(ipAddress: string | null) {
         });
       });
 
-      client.on('message', (topic, message) => {
+      client.on("message", (topic, message) => {
         const value = parseFloat(message.toString());
         if (isNaN(value)) return;
 
-        setSensorData(prev => {
+        setSensorData((prev) => {
           const updated = { ...prev, lastUpdated: new Date() };
 
-          if (topic.includes('humidity0')) {
+          if (topic.includes("humidity0")) {
             updated.humidity = value;
-          } else if (topic.includes('moisture0')) {
+          } else if (topic.includes("moisture0")) {
             updated.moisture = value;
-          } else if (topic.includes('sunlight/uv')) {
+          } else if (topic.includes("sunlight/uv")) {
             updated.sunlight = { ...prev.sunlight, uv: value };
-          } else if (topic.includes('sunlight/visible')) {
+          } else if (topic.includes("sunlight/visible")) {
             updated.sunlight = { ...prev.sunlight, visible: value };
-          } else if (topic.includes('sunlight/ir')) {
+          } else if (topic.includes("sunlight/ir")) {
             updated.sunlight = { ...prev.sunlight, ir: value };
           }
 
@@ -78,19 +78,18 @@ export function useMqtt(ipAddress: string | null) {
         });
       });
 
-      client.on('error', (err) => {
-        console.error('MQTT error:', err);
-        setError('Connection error');
+      client.on("error", (err) => {
+        console.error("MQTT error:", err);
+        setError("Connection error");
         setIsConnected(false);
       });
 
-      client.on('close', () => {
+      client.on("close", () => {
         setIsConnected(false);
       });
-
     } catch (err) {
-      console.error('Failed to connect:', err);
-      setError('Failed to connect to broker');
+      console.error("Failed to connect:", err);
+      setError("Failed to connect to broker");
     }
   }, [ipAddress]);
 
