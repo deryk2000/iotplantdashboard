@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import mqtt, { MqttClient } from "mqtt";
 import { SensorData } from "@/types/plant";
 
-const DEFAULT_WS_PORT = 9001; // change if your broker uses a different WS port
+const DEFAULT_WS_PORT = 8083; // change if your broker uses a different WS port
 
 export function useMqtt(ipAddress: string | null) {
   const [sensorData, setSensorData] = useState<SensorData>({
@@ -23,9 +23,8 @@ export function useMqtt(ipAddress: string | null) {
     if (!ipAddress) return;
 
     try {
-      // Use ws/wss depending on page protocol and target IP address
       const proto = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
-      const wsUrl = `${proto}://${ipAddress}:${DEFAULT_WS_PORT}`;
+      const wsUrl = `${proto}://172.16.32.5:${DEFAULT_WS_PORT}`;
 
       const client = mqtt.connect(wsUrl, {
         reconnectPeriod: 5000,
@@ -40,7 +39,16 @@ export function useMqtt(ipAddress: string | null) {
         setIsConnected(true);
         setError(null);
 
-        // Subscribe to all sensor topics for this plant
+        const debugTopic = `#`;
+        client.subscribe(debugTopic, (err) => {
+          if (err) {
+            console.error(`Failed to subscribe to ${debugTopic}:`, err);
+          } else {
+            console.log(`Subscribed to ${debugTopic} (debug wildcard)`);
+          }
+        });
+
+        /*
         const topics = [
           `${ipAddress}/sensors/humidity0`,
           `${ipAddress}/sensors/moisture0`,
@@ -48,28 +56,44 @@ export function useMqtt(ipAddress: string | null) {
           `${ipAddress}/sensors/sunlight/visible`,
           `${ipAddress}/sensors/sunlight/ir`,
         ];
-
-        topics.forEach((topic) => {
-          client.subscribe(topic, (err) => {
-            if (err) {
-              console.error(`Failed to subscribe to ${topic}:`, err);
-            } else {
-              console.log(`Subscribed to ${topic}`);
-            }
-          });
-        });
+        topics.forEach((topic) => client.subscribe(topic, err => {
+          if (err) console.error(`Failed to subscribe to ${topic}:`, err);
+        }));
+        */
       });
 
       client.on("message", (topic, message) => {
-        const value = parseFloat(message.toString());
-        if (isNaN(value)) return;
+        const raw = message.toString();
+        console.debug("MQTT message", { topic, raw });
+
+        let value: number | null = null;
+
+        const num = parseFloat(raw);
+        if (!isNaN(num)) {
+          value = num;
+        } else {
+          try {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed === "number") {
+              value = parsed;
+            } else if (parsed && typeof parsed.value === "number") {
+              value = parsed.value;
+            } else if (parsed && typeof parsed.payload === "number") {
+              value = parsed.payload;
+            }
+          } catch (_e) {
+            // not JSON, ignore
+          }
+        }
+
+        if (value === null) return;
 
         setSensorData((prev) => {
           const updated = { ...prev, lastUpdated: new Date() };
 
-          if (topic.includes("humidity0")) {
+          if (topic.includes("humidity")) {
             updated.humidity = value;
-          } else if (topic.includes("moisture0")) {
+          } else if (topic.includes("moisture")) {
             updated.moisture = value;
           } else if (topic.includes("sunlight/uv")) {
             updated.sunlight = { ...prev.sunlight, uv: value };
@@ -77,6 +101,8 @@ export function useMqtt(ipAddress: string | null) {
             updated.sunlight = { ...prev.sunlight, visible: value };
           } else if (topic.includes("sunlight/ir")) {
             updated.sunlight = { ...prev.sunlight, ir: value };
+          } else {
+            console.debug("Unhandled sensor topic:", topic);
           }
 
           return updated;
