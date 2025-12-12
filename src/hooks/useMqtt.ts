@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import mqtt, { MqttClient } from "mqtt";
 import { SensorData } from "@/types/plant";
 
-const BROKER_URL = "mqtt://172.16.32.5:1883"; // WebSocket port for MQTT
+const DEFAULT_WS_PORT = 9001; // change if your broker uses a different WS port
 
 export function useMqtt(ipAddress: string | null) {
   const [sensorData, setSensorData] = useState<SensorData>({
@@ -23,9 +23,14 @@ export function useMqtt(ipAddress: string | null) {
     if (!ipAddress) return;
 
     try {
-      const client = mqtt.connect(BROKER_URL, {
+      // Use ws/wss depending on page protocol and target IP address
+      const proto = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
+      const wsUrl = `${proto}://${ipAddress}:${DEFAULT_WS_PORT}`;
+
+      const client = mqtt.connect(wsUrl, {
         reconnectPeriod: 5000,
         connectTimeout: 10000,
+        clientId: `plant-dashboard-${Math.random().toString(16).slice(2, 8)}`,
       });
 
       clientRef.current = client;
@@ -84,9 +89,8 @@ export function useMqtt(ipAddress: string | null) {
         setIsConnected(false);
       });
 
-      client.on("close", () => {
-        setIsConnected(false);
-      });
+      client.on("offline", () => console.log("MQTT offline"));
+      client.on("reconnect", () => console.log("MQTT reconnecting"));
     } catch (err) {
       console.error("Failed to connect:", err);
       setError("Failed to connect to broker");
